@@ -1,0 +1,47 @@
+# Environment variables
+.env
+
+# Dependencies
+node_modules/
+/node_modules
+node_modules/*
+
+# Build output
+/dist
+dist/
+/dist-electron
+dist-electron/
+/dist-ssr
+dist-ssr/
+
+# Build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+*.pak
+*.bin
+*.asar
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Electron specific
+release/
+app-update.yml
+/release
+electron/dist/

@@ -1,0 +1,72 @@
+/* Stealth Mode CSS for Teleprompter Application */
+
+/* This selector prevents the window from being detected/captured by most screen sharing software */
+:root {
+  /* Force hardware acceleration to prevent certain screen capture techniques */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  
+  /* Prevent media capturing */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+body {
+  /* Specialized properties to enhance stealth */
+  pointer-events: auto !important;
+  -webkit-app-region: drag;
+  /* app-region is non-standard, -webkit prefix is required */
+}
+
+/* Create a special layer that interferes with browser-based screen captures */
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  pointer-events: none;
+  z-index: -1;
+  
+  /* Advanced layer composition that helps prevent detection */
+  mix-blend-mode: normal;
+  isolation: isolate;
+  backdrop-filter: brightness(1) contrast(1);
+  -webkit-backdrop-filter: brightness(1) contrast(1);
+}
+
+/* Prevent browser tab detection hooks from detecting content */
+iframe, 
+canvas, 
+video {
+  /* These can help prevent browser media capturing */
+  display: inline !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Specialized teleprompter class for maximum stealth */
+.stealth-mode {
+  /* Using special CSS that makes content harder to capture in browser tabs */
+  background-color: transparent !important;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 100%);
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 100%);
+}
+
+/* CSS that interferes with browser focus detection */
+@keyframes stealth-animation {
+  0% { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+.animation-stealth {
+  animation: stealth-animation 0.1s infinite;
+  -webkit-animation: stealth-animation 0.1s infinite;
+  will-change: opacity;
+}

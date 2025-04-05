@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 0% / 0.5;
+    --foreground: 0 0% 100% / 0.9;
+    --card: 220 40% 17% / 0.7;
+    --card-foreground: 0 0% 100% / 0.9;
+    --primary: 214 100% 60% / 0.7;
+    --primary-foreground: 0 0% 100% / 0.9;
+    --secondary: 220 13% 46% / 0.7;
+    --secondary-foreground: 0 0% 100% / 0.9;
+    --accent: 220 13% 27% / 0.5;
+    --accent-foreground: 0 0% 100% / 0.9;
+    --destructive: 0 84% 60% / 0.7;
+    --destructive-foreground: 0 0% 100% / 0.9;
+    --border: 0 0% 100% / 0.1;
+    --input: 0 0% 100% / 0.1;
+    --ring: 0 0% 100% / 0.3;
+  }
+}
+
+/* Custom scrollbar styling */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Teleprompter specific styles */
+.teleprompter-container {
+  background-color: rgba(0, 0, 0, 0);
+}
+
+.teleprompter-text {
+  color: white;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
+}
+
+/* Make scrollbar invisible */
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+/* Window dragging regions for Electron */
+.-app-region-drag {
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+.-app-region-no-drag {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
