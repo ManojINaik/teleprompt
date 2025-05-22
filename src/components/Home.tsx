@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { COMMAND_KEY, ALT_KEY, ARROW_UP, ARROW_DOWN, ARROW_LEFT, ARROW_RIGHT, getShortcutString } from '../utils/platform'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card'
 import GeminiChat from './GeminiChat'
@@ -11,6 +11,8 @@ const Home: React.FC = () => {
   const [fontSize, setFontSize] = useState<number>(24) 
   const [teleprompterVisible, setTeleprompterVisible] = useState<boolean>(false)
   const [activeTab, setActiveTab] = useState<'teleprompter' | 'chat'>('teleprompter')
+  // Create a ref to the text input that we can pass to the TeleprompterTextPanel
+  const textInputRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     // We could add an IPC method to check if teleprompter window exists/is visible
@@ -73,7 +75,74 @@ const Home: React.FC = () => {
     }
   }, []);
 
+  // Add direct keyboard shortcut handler
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Handle Alt+S
+      if (e.altKey && e.key === 's') {
+        e.preventDefault()
+        console.log('Alt+S detected in Home component')
+        focusTextInput()
+      }
+      // Also handle Ctrl+Alt+S
+      if (e.ctrlKey && e.altKey && e.key === 's') {
+        e.preventDefault()
+        console.log('Ctrl+Alt+S detected in Home component')
+        focusTextInput()
+      }
+    }
+    
+    // Listen for IPC event to focus input
+    const removeFocusListener = window.electronAPI.onFocusScriptInput(() => {
+      console.log('Focus script input IPC received in Home')
+      focusTextInput()
+    })
+    
+    window.addEventListener('keydown', handleKeyDown)
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      removeFocusListener()
+    }
+  }, [])
 
+  // Listen for Gemini Chat toggle IPC event
+  useEffect(() => {
+    const removeGeminiChatToggleListener = window.electronAPI.onToggleGeminiChat(() => {
+      console.log('Toggle Gemini Chat IPC received in Home')
+      setActiveTab(prevTab => prevTab === 'chat' ? 'teleprompter' : 'chat')
+    })
+
+    return () => {
+      removeGeminiChatToggleListener()
+    }
+  }, [])
+
+  // Helper function to focus the text input
+  const focusTextInput = () => {
+    console.log('Attempting to focus text input, ref exists:', !!textInputRef.current)
+    if (textInputRef.current) {
+      // Force any blur first
+      textInputRef.current.blur()
+      // Then try multiple focus methods
+      textInputRef.current.focus()
+      // For good measure, try setting the tab index
+      textInputRef.current.tabIndex = 1
+      
+      // Simulate a click
+      textInputRef.current.click()
+      
+      // Try with a setTimeout as well
+      setTimeout(() => {
+        if (textInputRef.current) {
+          textInputRef.current.focus()
+          console.log('Focus applied with timeout')
+        }
+      }, 100)
+      
+      console.log('Focus attempts complete')
+    }
+  }
 
   const shortcuts = {
     toggleTeleprompter: getShortcutString([COMMAND_KEY, ALT_KEY, 'T']),
@@ -85,10 +154,9 @@ const Home: React.FC = () => {
     moveLeft: getShortcutString(['Ctrl', ARROW_LEFT]),
     moveRight: getShortcutString(['Ctrl', ARROW_RIGHT]),
     moveUp: getShortcutString(['Ctrl', ARROW_UP]),
-    moveDown: getShortcutString(['Ctrl', ARROW_DOWN])
+    moveDown: getShortcutString(['Ctrl', ARROW_DOWN]),
+    toggleGeminiChat: getShortcutString([COMMAND_KEY, ALT_KEY, 'G'])
   }
-
-
 
   return (
     <div className="min-h-screen bg-transparent backdrop-blur-sm">
@@ -149,6 +217,7 @@ const Home: React.FC = () => {
                 onTextChange={setTeleprompterText}
                 onSetText={handleSetText}
                 teleprompterVisible={teleprompterVisible}
+                textInputRef={textInputRef}
               />
             </CardContent>
           </Card>
@@ -178,6 +247,5 @@ const Home: React.FC = () => {
     </div>
   )
 }
-
 
 export default Home

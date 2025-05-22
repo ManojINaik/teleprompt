@@ -19,6 +19,7 @@ interface ElectronAPI {
   onControlTeleprompter: (callback: (data: { action: string; speed?: number }) => void) => () => void;
   onSetTeleprompterSpeed: (callback: (speed: number) => void) => () => void;
   onSetTeleprompterInteractive: (callback: (interactive: boolean) => void) => () => void;
+  onFocusScriptInput: (callback: () => void) => () => void;
 }
 
 declare global {

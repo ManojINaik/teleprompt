@@ -2,26 +2,25 @@
 .env
 
 # Dependencies
-node_modules/
-/node_modules
+node_modules
 node_modules/*
 
 # Build output
-/dist
-dist/
-/dist-electron
-dist-electron/
-/dist-ssr
-dist-ssr/
+dist
+dist/*
+dist-electron
+dist-electron/*
+dist-ssr
+dist-ssr/*
 
 # Build artifacts
+dist/
+dist-electron/
+dist-ssr/
 *.exe
 *.dll
 *.so
 *.dylib
-*.pak
-*.bin
-*.asar
 
 # Logs
 *.log
@@ -40,8 +39,7 @@ yarn-error.log*
 *.sln
 *.sw?
 
-# Electron specific
+# Electron
 release/
-app-update.yml
-/release
-electron/dist/
+app-update.yml/dist/
+/node_modules/electron/

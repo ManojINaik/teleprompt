@@ -12,6 +12,16 @@ console.log("Environment:", isDev ? "Development" : "Production")
 console.log("__dirname:", __dirname)
 console.log("app.getPath('exe'):", app.getPath('exe'))
 
+// Handle certificate errors in development
+if (isDev) {
+  app.commandLine.appendSwitch('ignore-certificate-errors')
+  app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
+    // Only allow certificate errors in development
+    event.preventDefault()
+    callback(true)
+  })
+}
+
 // Application State
 const state = {
   // Window management properties
@@ -53,6 +63,10 @@ export interface IShortcutsHelperDeps {
   moveWindowRight: () => void
   moveWindowUp: () => void
   moveWindowDown: () => void
+  // Focus control
+  focusScriptInput: () => void
+ṅṅgggggggggggggggggggggggggggggg  // Gemini Chat toggle
+  toggleGeminiChat: () => void
 }
 
 export interface IIpcHandlerDeps {
@@ -86,6 +100,8 @@ function initializeHelpers() {
     moveWindowRight,
     moveWindowUp,
     moveWindowDown,
+    focusScriptInput,
+    toggleGeminiChat, // Add this line
   })
 }
 
@@ -111,7 +127,8 @@ async function createWindow(): Promise<void> {
       preload: isDev
         ? path.join(__dirname, "../dist-electron/preload.js")
         : path.join(__dirname, "preload.js"),
-      scrollBounce: true
+      scrollBounce: true,
+      webSecurity: !isDev  // Disable web security in development
     },
     show: true,
     frame: false,
@@ -155,14 +172,24 @@ async function createWindow(): Promise<void> {
   state.windowSize = { width, height }
 }
 
+// Function to toggle Gemini Chat visibility in the main window
+function toggleGeminiChat(): void {
+  if (state.mainWindow && !state.mainWindow.isDestroyed()) {
+    console.log('Sending toggle-gemini-chat to main window')
+    state.mainWindow.webContents.send('toggle-gemini-chat')
+  } else {
+    console.warn('Cannot toggle Gemini chat, main window not available.')
+  }
+}
+
 // Create the teleprompter window
 async function createTeleprompterWindow(): Promise<void> {
   const primaryDisplay = screen.getPrimaryDisplay()
   const workArea = primaryDisplay.workAreaSize
   
-  // Default size for teleprompter - using the same size as the main window
+  // Default size for teleprompter - using a larger height to ensure content is fully visible
   const width = 800
-  const height = 600
+  const height = Math.round(workArea.height * 0.9) // Use 90% of the available screen height
   
   // Don't recreate if it already exists
   if (state.teleprompterWindow && !state.teleprompterWindow.isDestroyed()) {
@@ -193,12 +220,13 @@ async function createTeleprompterWindow(): Promise<void> {
       preload: isDev
         ? path.join(__dirname, "../dist-electron/preload.js")
         : path.join(__dirname, "preload.js"),
-      scrollBounce: true
+      scrollBounce: true,
+      webSecurity: isDev ? false : true // Disable web security in development
     },
     show: false, // Start hidden, we'll show it after setup
     frame: false,
     transparent: true,
-    fullscreenable: false,
+    fullscreenable: true, // Allow full screen for maximum content visibility
     hasShadow: false,
     backgroundColor: "#00000000",
     focusable: true,
@@ -206,7 +234,9 @@ async function createTeleprompterWindow(): Promise<void> {
     type: "panel",
     paintWhenInitiallyHidden: true,
     titleBarStyle: "hidden",
-    enableLargerThanScreen: true
+    enableLargerThanScreen: true,
+    autoHideMenuBar: true, // Hide menu bar to maximize content space
+    minHeight: height, // Set minimum height to ensure content is visible
   })
   
   // Important - apply content protection immediately
@@ -582,6 +612,22 @@ function getMainWindow(): BrowserWindow | null {
   return state.mainWindow
 }
 
+function focusScriptInput(): void {
+  const mainWindow = getMainWindow()
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    console.log("Focusing script input from main process")
+    // First bring the window to front
+    if (!mainWindow.isVisible()) {
+      mainWindow.show()
+    }
+    mainWindow.focus()
+    // Then send focus message
+    setTimeout(() => {
+      mainWindow.webContents.send('focus-script-input')
+    }, 100)
+  }
+}
+
 // Window movement functions - exactly like interview-coder-no-sub
 function moveWindowHorizontal(updateFn: (x: number) => number): void {
   if (!state.mainWindow) return;
@@ -658,6 +704,7 @@ export {
   moveTeleprompterRight,
   moveTeleprompterUp,
   moveTeleprompterDown,
+  focusScriptInput,
 }
 
 // App lifecycle events

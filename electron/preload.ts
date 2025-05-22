@@ -25,6 +25,8 @@ interface ElectronAPI {
   onControlTeleprompter: (callback: (data: { action: string; speed?: number }) => void) => () => void
   onSetTeleprompterSpeed: (callback: (speed: number) => void) => () => void
   onSetTeleprompterInteractive: (callback: (interactive: boolean) => void) => () => void
+  onFocusScriptInput: (callback: () => void) => () => void
+  onToggleGeminiChat: (callback: () => void) => () => void
 }
 
 const electronAPI = {
@@ -104,6 +106,21 @@ const electronAPI = {
     ipcRenderer.on('set-teleprompter-interactive', subscription)
     return () => {
       ipcRenderer.removeListener('set-teleprompter-interactive', subscription)
+    }
+  },
+  
+  onFocusScriptInput: (callback: () => void) => {
+    const subscription = () => callback()
+    ipcRenderer.on('focus-script-input', subscription)
+    return () => {
+      ipcRenderer.removeListener('focus-script-input', subscription)
+    }
+  },
+  onToggleGeminiChat: (callback: () => void) => {
+    const subscription = () => callback()
+    ipcRenderer.on('toggle-gemini-chat', subscription)
+    return () => {
+      ipcRenderer.removeListener('toggle-gemini-chat', subscription)
     }
   }
 } as ElectronAPI

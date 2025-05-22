@@ -4,35 +4,13 @@ const Teleprompter: React.FC = () => {
   const [text, setText] = useState<string>("Paste your script here or use the control panel to set text...")
   const [fontSize, setFontSize] = useState<number>(24) // Font size instead of scroll speed
   const [isInteractive, setIsInteractive] = useState<boolean>(false)
-  const [containerHeight, setContainerHeight] = useState<number>(0)
-  const [contentHeight, setContentHeight] = useState<number>(0)
   const textContainerRef = useRef<HTMLDivElement>(null)
   const textContentRef = useRef<HTMLDivElement>(null)
 
-  // Auto-adjust font size based on content
+  // Update references when content changes
   useEffect(() => {
-    const updateHeights = () => {
-      if (textContainerRef.current && textContentRef.current) {
-        setContainerHeight(textContainerRef.current.clientHeight);
-        setContentHeight(textContentRef.current.scrollHeight);
-      }
-    };
-
-    // Initial update
-    updateHeights();
-
-    // Update on window resize
-    window.addEventListener('resize', updateHeights);
-    return () => window.removeEventListener('resize', updateHeights);
+    // Nothing to do here, just maintain the refs
   }, [text, fontSize]);
-
-  // Auto-adjust font size if content doesn't fit
-  useEffect(() => {
-    if (contentHeight > containerHeight && fontSize > 12) {
-      // Reduce font size automatically to fit content
-      setFontSize(prev => Math.max(prev - 1, 12));
-    }
-  }, [contentHeight, containerHeight, fontSize]);
 
   // Handle paste event for direct text input
   const handlePaste = useCallback((event: React.ClipboardEvent<HTMLTextAreaElement>) => {
@@ -82,8 +60,11 @@ const Teleprompter: React.FC = () => {
     })
 
     const cleanupInteractive = window.electronAPI.onSetTeleprompterInteractive((interactive) => {
+      console.log("Interactive mode set to:", interactive)
       setIsInteractive(interactive)
     })
+
+    // Note: We're not defaulting to non-interactive mode here anymore
 
     return () => {
       cleanupUpdateText?.()
@@ -116,8 +97,33 @@ const Teleprompter: React.FC = () => {
     };
   }, [isInteractive, increaseFontSize, decreaseFontSize]);
 
+  // Force non-interactive mode on mouse events
+  useEffect(() => {
+    const blockMouseInteraction = (e: MouseEvent) => {
+      if (!isInteractive) {
+        // Don't prevent all events, just stop propagation to avoid breaking typing
+        e.stopPropagation();
+      }
+    };
+    
+    // Block mouse events but don't prevent default to allow typing to work
+    window.addEventListener('mousedown', blockMouseInteraction, true);
+    window.addEventListener('mouseup', blockMouseInteraction, true);
+    window.addEventListener('click', blockMouseInteraction, true);
+    window.addEventListener('dblclick', blockMouseInteraction, true);
+    window.addEventListener('contextmenu', blockMouseInteraction, true);
+    
+    return () => {
+      window.removeEventListener('mousedown', blockMouseInteraction, true);
+      window.removeEventListener('mouseup', blockMouseInteraction, true);
+      window.removeEventListener('click', blockMouseInteraction, true);
+      window.removeEventListener('dblclick', blockMouseInteraction, true);
+      window.removeEventListener('contextmenu', blockMouseInteraction, true);
+    };
+  }, [isInteractive]);
+
   return (
-    <div className="teleprompter-container w-full h-screen bg-transparent overflow-hidden flex flex-col p-0 stealth-mode animation-stealth">
+    <div className="teleprompter-container w-full h-screen bg-transparent overflow-auto flex flex-col p-0 stealth-mode animation-stealth">
       {/* Optional textarea for direct input - only shown when interactive */}
       {isInteractive && (
         <textarea
@@ -130,23 +136,25 @@ const Teleprompter: React.FC = () => {
         />
       )}
       
-      {/* Main text container with auto-sizing */}
+      {/* Main text container - changed to show full content by default */}
       <div 
         ref={textContainerRef} 
-        className="flex-grow flex items-center justify-center p-2 overflow-auto"
+        className="flex-grow p-2 overflow-auto"
       >
         <div 
           ref={textContentRef}
-          className="teleprompter-text whitespace-pre-wrap text-center w-full max-h-full stealth-mode"
+          className="teleprompter-text whitespace-pre-wrap text-center w-full stealth-mode"
           style={{ 
             fontSize: `${fontSize}px`, 
             lineHeight: '1.3',
-            overflowY: 'visible',
+            color: isInteractive ? 'transparent' : 'white', // Hide text when interactive
             // Advanced CSS properties to bypass browser tab detection
             transform: 'translateZ(0)',
             WebkitTransform: 'translateZ(0)',
             backfaceVisibility: 'hidden',
-            WebkitBackfaceVisibility: 'hidden'
+            WebkitBackfaceVisibility: 'hidden',
+            userSelect: 'none', // Prevent text selection
+            pointerEvents: 'none' // Prevent mouse interaction with content
           }}
         >
           {text}
@@ -154,10 +162,9 @@ const Teleprompter: React.FC = () => {
       </div>
       
       {/* Debug info if interactive */}
-      {isInteractive && contentHeight > containerHeight && (
-        <div className="text-xs text-red-500 bg-black bg-opacity-50 p-1 text-center">
-          Warning: Content too large. Font size reduced to {fontSize}px. 
-          Content height: {contentHeight}px, Container height: {containerHeight}px
+      {isInteractive && (
+        <div className="text-xs text-white bg-black bg-opacity-50 p-1 text-center">
+          Font size: {fontSize}px
         </div>
       )}
       
